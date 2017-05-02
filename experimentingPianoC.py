@@ -8,7 +8,7 @@ import numpy as np
 
 print("Hello World")
 # sampling frequency (or sample rate) is the number of samples per second in a Sound. For example: if the sampling frequency is 44100 hertz, a recording with a duration of 2 seconds will contain 88200 samples.
-sampFreq, signal = wavfile.read('C:/Users/raro/Desktop/pianoc.wav')
+sampFreq, signal = wavfile.read('pianoc.wav')
 print signal.shape
 duration= float(signal.shape[0]) / float(sampFreq)    #in secs
 print(sampFreq, signal, duration)
@@ -60,6 +60,8 @@ fig_3.plot(frq, p_abs, 'r.')
 plt.ylabel('|Freq(Hz)|')
 plt.xlabel('Freq(Hz)')
 
+plt.title("Extracted a, p, f")
+
 plt.show()
 
 low_values=p_abs<0.1*max(p_abs)
@@ -89,6 +91,8 @@ fig_3 = fig.add_subplot(313)
 fig_3.plot(frq, new_p_abs, 'r.')
 plt.ylabel('|Freq(Hz)|')
 plt.xlabel('Freq(Hz)')
+
+plt.title("Modified a, p, f")
 
 plt.show()
 
