@@ -1,71 +1,107 @@
-from pylab import*
+#from pylab import*
+from pylab import arange
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
 import pandas as pd
 import cmath
+import numpy as np
 
 print("Hello World")
-sampFreq, snd = wavfile.read('C:/Users/raro/Desktop/pianoc.wav')
-print snd.shape
-print snd.shape[0]
-duration=float(snd.shape[0])/float(sampFreq)    #in secs
-print(sampFreq, snd, duration)
+# sampling frequency (or sample rate) is the number of samples per second in a Sound. For example: if the sampling frequency is 44100 hertz, a recording with a duration of 2 seconds will contain 88200 samples.
+sampFreq, signal = wavfile.read('C:/Users/raro/Desktop/pianoc.wav')
+print signal.shape
+duration= float(signal.shape[0]) / float(sampFreq)    #in secs
+print(sampFreq, signal, duration)
 
-max_val=max(snd)
-min_val=min(snd)
-summary_df=pd.DataFrame(snd)
-print(summary_df.describe)
+#Part 1: Display the signal
+timeArray = arange(0, signal.shape[0], 1)
+timeArray = timeArray/ float(sampFreq) * 1000  #scale to milliseconds
 
-timeArray = arange(0, snd.shape[0], 1)
-timeArray = timeArray/ float(sampFreq)
-timeArray = timeArray * 1000  #scale to milliseconds
-
-plt.plot(timeArray, snd, 'r-')
+plt.plot(timeArray, signal, 'r-')
 plt.ylabel('Amplitude')
 plt.xlabel('Time (ms)')
+plt.title("Signal: Piano C note")
 plt.show()
 
+p=np.fft.fft(signal)
+n=len(signal)
 
-p=fft(snd)
-n=len(snd)
-
-# One Implementation
-# # Calculate the number of unique points
-#
-# NumUniquePts = ceil((n+1)/2);
-# nUniquePts = int(ceil((n+1)/2.0))
-#
-#
-# # FFT is symmetric, throw away second half
-# p = p[0:nUniquePts]
-#
-# #  fourier transform of the tone returned by the fft function contains
-# # both magnitude and phase information and is given in a complex
-# # representation (i.e. returns complex numbers). By taking the absolute
-# # value of the fourier transform we get the information about the magnitude
-# # of the frequency components.
-#
-# p = abs(p)  #Calculate power(magnitude)
-#
-#
-# #p = p / float(n) # scale by the number of points so that
-#                  # the magnitude does not depend on the length
-#                  # of the signal or on its sampling frequency
-# p = p**2  # square it to get the power
-#
-# # multiply by two (see technical document for details)
-# # odd nfft excludes Nyquist point
-# if n % 2 > 0: # we've got odd number of points fft
-#     p[1:len(p)] = p[1:len(p)] * 2
-# else:
-#     p[1:len(p) -1] = p[1:len(p) - 1] * 2 # we've got even number of points fft
-#
-# freqArray = arange(0, nUniquePts, 1.0) * (sampFreq / n);
-# plt.plot(freqArray/1000, 10*log10(p), 'r.')
-# plt.xlabel('Frequency (kHz)')
-# plt.ylabel('Power (dB)')
-# plt.show()
-
-
+#p=p[range(n/2)]
 p_abs=abs(p)
-p_phase=cmath.phase(p)
+p_phase=np.zeros(len(p))
+for p_single in range(len(p)):
+    p_phase[p_single]=cmath.phase(p[p_single])
+print p_phase
+print p_abs
+
+n = len(signal) # length of the signal
+k = np.arange(n)
+T = n/sampFreq
+frq = k/T # two sides frequency range
+#frq = frq[range(n/2)] # one side frequency range
+
+
+#Plot all the results
+fig = plt.figure()
+
+fig_1 = fig.add_subplot(311)
+fig_1.plot(timeArray, signal, 'r-')
+plt.ylabel('Amplitude')
+plt.xlabel('Time')
+
+fig_2 = fig.add_subplot(312)
+fig_2.plot(frq, p_phase, 'r.')
+plt.ylabel('Phase')
+plt.xlabel('Freq(Hz)')
+
+
+fig_3 = fig.add_subplot(313)
+fig_3.plot(frq, p_abs, 'r.')
+plt.ylabel('|Freq(Hz)|')
+plt.xlabel('Freq(Hz)')
+
+plt.show()
+
+low_values=p_abs<0.1*max(p_abs)
+new_p_abs = p_abs
+new_p_abs[low_values]=0
+new_p_phase=p_phase
+new_p_phase[low_values]=0
+new_p=p
+new_p[low_values]=0+0j
+
+
+#Plot all the results
+fig = plt.figure()
+
+fig_1 = fig.add_subplot(311)
+fig_1.plot(timeArray, signal, 'r-')
+plt.ylabel('Amplitude')
+plt.xlabel('Time')
+
+fig_2 = fig.add_subplot(312)
+fig_2.plot(frq, new_p_phase, 'r.')
+plt.ylabel('Phase')
+plt.xlabel('Freq(Hz)')
+
+
+fig_3 = fig.add_subplot(313)
+fig_3.plot(frq, new_p_abs, 'r.')
+plt.ylabel('|Freq(Hz)|')
+plt.xlabel('Freq(Hz)')
+
+plt.show()
+
+major_frq_indices=np.nonzero(new_p_abs)
+print major_frq_indices
+
+# eqns=[]
+# for i in major_frq_indices:
+#     eqns.append((p_phase[i], p_abs[i], i))   #Phase, Amplitude, Frequency
+
+new_signal=np.fft.ifftshift(new_p)
+plt.plot(timeArray, new_signal, 'r-')
+plt.ylabel('Amplitude')
+plt.xlabel('Time (ms)')
+plt.title("New Signal: Piano C note")
+plt.show()
